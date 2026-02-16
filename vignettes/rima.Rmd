@@ -80,7 +80,9 @@ dt_ct_palette <- unique(rbindlist(l_ct_colors))
 
 ## Define neighbourhoods and preprocess for RIMA
 
-Cell neighbourhoods are small groups of cells which bundles together very similar single cells. Working with cell neighbourhoods allows to retain near single-cell resolution, while mitigating sequencing noise. The neighbourhoods can be seen as capturing distinct cell states, which are more precise than cell types, and more robust to noise than single cells. We use the implementation in the miloR package to define the neighbourhoods.
+Cell neighbourhoods are small groups of cells which bundles together very similar single cells. Working with cell neighbourhoods allows to retain near single-cell resolution, while mitigating sequencing noise. The neighbourhoods can be seen as capturing distinct cell states, which are more precise than cell types, and more robust to noise than single cells. They are typically defined based on batch-corrected embeddings (e.g. MNN, scVI), which were derived for each dataset independently.
+
+We use the implementation in the miloR package to define the neighbourhoods.
 
 ```{r message=FALSE}
 # PCA is a batch-corrected embedding, cells that are close to each other in this embedding will form neighbourhoods
