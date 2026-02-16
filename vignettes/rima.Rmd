@@ -102,6 +102,7 @@ mi_rabbit <- define_neighbourhoods(sce_rabbit, prop_seeds = 0.02)
 In what follows, the atlases will be contained in Milo objects. Although Milo was developed for differential abundance testing, we do not make use of this functionality. Instead, we only use the Milo objects as extensions of SingleCellExperiment objects which can contain neighbourhoods.
 If you have already defined the neighbourhoods (possibly with another method), simply pass them to the @nhoods slot of the Milo objects. This needs to be a (sparse) matrix of shape [n_cell, n_nhoods], filled with 0s and 1s to indicate whether cells belong to the neighbourhoods.
 
+The following prepares a pair of Milo objects for RIMA analysis. In practice it ensures that features are properly named, and calculates the "neighbourhoods' expressions". These expression profiles are calculated by averaging the gene expression counts (see the `assay` argument) of all the cells that compose a neighbourhood.
 
 ```{r}
 milos <- preprocess_milos(mi_mouse, mi_rabbit)
@@ -111,6 +112,8 @@ milos
 
 ## Calculate neighbourhood-neighbourhood similarities across the atlases
 
+The following calculates the Spearman correlation between the neighbourhoods' expressions of every neighbourhood-neighbourhood pair.
+
 ```{r}
 dt_sims <- RIMA::calculate_similarities(milos, method = "spearman")
 head(dt_sims)
@@ -119,11 +122,14 @@ head(dt_sims)
 
 ## Derive the significance of each neighbourhood-neighbourhood pair
 
+`calculate_nhoodnhood_significance` determines which neighbourhood pairs are more similar (i.e. have a higher Spearman correlation) than expected by chance. For this, it randomly samples cells to form a collection of scrambled neighbourhoods, and calculates similarities between scrambled and intact neighbourhoods to define a null distribution of similarity. The true neighbourhood-neighbourhood similarities are compared to this null population to determine which true pairs are significantly more similar than pairs between a true and a scrambled neighbourhood.
+
 ```{r message=FALSE,results='hide'}
 dt_sims_withSignif <- RIMA::calculate_nhoodnhood_significance(
   milos,
   dt_sims,
   n_scrambles = 10,
+  sim_method = "spearman",
   col_scramble_label = "celltype",
   alpha = 0.05,
   direction = "b"
@@ -135,12 +141,24 @@ head(dt_sims_withSignif)
 ```
 
 ### Inspect the effect of trimming insignificant nhood-nhood edges
+
+Although cell's and samples' metadata are not used to derive neighbourhood's pairing, we can use them to inspect the effect of the previous procedure and plot what kind of neighbourhood pairs were deemed (in)significant after comparison with scrambled neighbourhoods. For this, the neighbourhoods are annotated by inspecting the metadata of the cells that compose them (i.e. what is the most represented cell type, time-point, etc...), and we report the proportion of each metadata pair that was retained after the significance filter.
+
+Let us take a simple example where the 1st atlas contains 10 neighbourhoods of type A, and the 2nd atlas contains 5 neighbourhoods of type B. This gives a total of 50 possible A-B pairs. After deriving emprirical p-values, only 8 pairs are deemed significant. The fraction of retained A-B edges is then: `8/50 = 0.16`.
+
+The first heatmap shows that RIMA's significance is globally coherent with our prior knowledge of cell types. For example, cell types coming from the same germ layer (ectoderm, mesoderm, endoderm) tend to be more similar to each other.
+The second heatmap shows that about 60% of the associations between the mouse extra-embryonic ectoderm (ExE ectoderm) and the rabbit gestational day 7 (GD7) were deemed significant.
+
 ```{r fig.height=8, fig.width=10, message=FALSE}
 RIMA::plot_trimming_map(milos, dt_sims_withSignif, cols_label = c("celltype", "celltype")) + labs(x="Celltype rabbit", y="Celltype mouse")
 RIMA::plot_trimming_map(milos, dt_sims_withSignif, cols_label = c("celltype", "stage")) + labs(x="Stage rabbit", y="Celltype mouse")
 ```
 
 ## Match the significant neighbourhood-neighbourhood pairs
+
+`calculate_nhoodnhood_significance` identified candidate pairs of neighbourhoods for matching, but did not actually match the two atlases. `match_nhoods` matches neighbourhoods one-to-one between the two species with Weighted Bipartite Graph Matching, using only the candidate neighbourhood pairs. Rather than matching each neighbourhood to its most similar counterpart in the other species, this procedure matches the entire graphs of candidate pairs at once. This fixes a strong artefact of the former, whereby most neighbourhoods from one species map to the very few neighbourhoods in the other species that happen to be slightly more similar to the first species, hence discarding a lot of biological signal.
+
+This function outputs a 3-column table, where the first (mouse) and second (rabbit) column represent the indices of the matched neighbourhoods, along with their reported similarity.
 
 ```{r}
 dt_match <- RIMA::match_nhoods(dt_sims_withSignif[is_significant == TRUE])
@@ -152,6 +170,8 @@ head(dt_match)
 # Inspect matching results
 
 ## Side-by-side embeddings with matches
+
+A direct way to visualise the matching is to plot side-by-side the embeddings of the atlases. Here each dot represents a neighbourhood, colored according to its cell type, and the lines indicate the cross-species matching, colored by the Spearman correlation of the pair. The group of neighbourhood on the left (resp. right) represent the mouse (resp. rabbit) neighbourhoods. This plot appears very sparse here as the matching was done on a very small subset of the original atlases.
 
 ```{r}
 # UMAP 2D embedding for visualisation
@@ -168,6 +188,8 @@ p
 
 ## Annotations of matched neighbourhoods
 
+Similarly to inspecting the trimming maps following the calculation of neighbourhood-neighbourhood significance, we can also see which types of neighbourhoods were paired together by inspecting the metadata associated with each matched pair.
+
 ```{r message=F, fig.height=8, fig.width=10}
 RIMA::plot_matches_map(milos, dt_match, cols_label = c("celltype", "celltype"), transform="log10")  + labs(x="Celltype rabbit", y="Celltype mouse")
 RIMA::plot_matches_map(milos, dt_match, cols_label = c("celltype", "stage"), cluster_cols = FALSE)  + labs(x="Stage rabbit", y="Celltype mouse")
@@ -175,6 +197,8 @@ RIMA::plot_matches_map(milos, dt_match, cols_label = c("celltype", "stage"), clu
 
 
 # Identify conserved gene expression with CoPE score
+
+One big advantage of having an explicit mapping is that we can compare individual gene expression across matched cell states. In the following scatterplots, each dot represents a mouse-rabbit neighbourhood pair. From these pairs, we calculate the Correlation of Paired Expression (CoPE score) for each gene as a measure of gene expression conservation across species. This measure allows to compare expressions on a "like for like" basis in matched cell states, and is particularly useful when comparing atlases that have a complex structure (e.g. many different cell types). The top row indicate the 3 genes with highest CoPE score, and the bottom row the 3 genes with lowest CoPE score.
 
 ```{r warning=F}
 # Set genes to NULL to calculate CoPE of all the genes
