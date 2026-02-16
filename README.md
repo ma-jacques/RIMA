@@ -2,22 +2,22 @@
 
 ## Overview
 
-RIMA (RIgorous Matching of single-cell transcriptomics Atlases) is an R package for matching single-cell transcriptomics data across two datasets at the level of **cell neighbourhoods**. It is particularly useful for cross-species comparisons, challenging integration scenarios, or comparing different experimental conditions where traditional integration methods may be difficult.
+RIMA (RIgorous Matching of single-cell transcriptomics Atlases) is an R package for matching single-cell transcriptomics data across two datasets at the level of **cell neighbourhoods**. It is particularly useful in scenarios where data integration is difficult, such as cross-species analyses, or comparisons across different experimental conditions.
 
-Unlike most integration-based approaches, RIMA identifies one-to-one mappings between cell neighbourhoods (small groups of similar cells) and retains quantitative gene expression information. This allows you to:
+Unlike most integration-based approaches, RIMA identifies an explicit mapping between cell neighbourhoods (small groups of similar cells) and retains quantitative gene expression information. This mapping enables a comparison between atlases on a "like for like" basis and allows to:
 
-- **Compare cell states** across different datasets in a rigorous, statistically sound manner
-- **Retain neighbourhood-level expression profiles** for downstream analysis
-- **Identify conserved gene expressions** between matched cell populations
-- **Analyse associations between neighbourhood's metadata**,  for example to align trajectories
+- **Compare cell states** across different datasets in a rigorous, statistically sound manner, with minimal preprocessing and assumptions
+- **Conserve the resolution offered by single-cell data** by avoiding cell aggregations (e.g. clustering, pseudo-bulking) or subsetting to known gene sets
+- **Retain actual gene expression values** for interpretable downstream analysis
+- **Analyse associations between neighbourhood's metadata**, for example to align cell trajectories across conditions
 
 ## Key Features
 
-- **Neighbourhood-based matching**: Works at the level of cell neighbourhoods rather than individual cells, improving robustness
-- **Statistical significance testing**: Derives p-values for neighbourhood pairs similarities by comparing the to similarities against neighbourhoods where cell identities have been scrambled
-- **Flexible gene mapping**: Supports feature mapping between datasets (e.g., for cross-species comparisons using orthologs)
+- **Neighbourhood-based matching**: Works at the level of cell neighbourhoods rather than individual cells or clusters, avoiding averaging out biological signal while improving robustness against sequencing noise
+- **Statistical significance testing**: Derives p-values for neighbourhood pairs similarities by creating a baseline with scrambled cell identity
 - **Gene conservation scoring**: Identifies genes with conserved expression (CoPE score) across matched neighbourhoods
 - **Visualise matching and metadata association**: Includes functions for creating informative heatmaps and embedding visualizations of RIMA's matching
+- **Flexible gene mapping**: Supports feature mapping between datasets (e.g., for cross-species comparisons using orthologs)
 
 ## Installation
 
@@ -44,9 +44,9 @@ RIMA requires R ≥ 4.0 and the following packages:
 - `viridis`
 - `rdist`
 
-The required packages will be automatically installed with the command hereabove.
-
 ## Quick Start
+
+The best way to get started with RIMA is to go through the usage example in the [vignettes directory](vignettes/).  It can also be accessed by running `browseVignettes("RIMA")`.
 
 Here's a minimal example to get you started:
 
@@ -105,12 +105,6 @@ Jacques, M.-A., et al. (2025). RIMA: Rigorous Matching of single-cell transcript
 GitHub: https://github.com/majpark21/RIMA
 ```
 
-## Documentation
-
-- **Vignette**: Run `browseVignettes("RIMA")` or check the [vignettes directory](vignettes/) for detailed usage examples
-- **Function help**: Use `?function_name` (e.g., `?calculate_nhoodnhood_significance`) for detailed parameter descriptions
-- **Package help**: Run `?RIMA` for an overview
-
 ## Example Data
 
 RIMA includes example data from mouse and rabbit gastrulation atlases:
@@ -124,6 +118,7 @@ RIMA::sce_rabbit_gastrulation
 ```
 
 Both example datasets are small subsets of large gastrulation atlases, see:
+- Pijuan-Sala, Blanca, et al. "A single-cell molecular map of mouse gastrulation and early organogenesis." Nature 566.7745 (2019): 490-495.
 - Imaz-Rosshandler, Ivan, et al. "Tracking early mammalian organogenesis–prediction and validation of differentiation trajectories at whole organism scale." Development 151.3 (2024): dev201867.
 - Ton, Mai-Linh Nu, et al. "An atlas of rabbit development as a model for single-cell comparative genomics." Nature cell biology 25.7 (2023): 1061-1072.
 
@@ -133,9 +128,5 @@ RIMA is licensed under the GPL-3 License. See [LICENSE](LICENSE) for details.
 
 ## Contact
 
-For questions or feedback, please contact the package maintainer:
+For questions or feedback, please contact:
 - **Marc-Antoine Jacques** - jacques@ebi.ac.uk
-
-## Related Packages
-
-- [**miloR**](https://bioconductor.org/packages/miloR): Differential abundance testing in neighbourhoods
