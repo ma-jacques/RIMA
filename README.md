@@ -55,8 +55,10 @@ library(RIMA)
 library(miloR)
 library(SingleCellExperiment)
 
-# Assuming you have two SingleCellExperiment objects, containing sc data for mouse and rabbit
-# sce_mouse and sce_rabbit
+# Assuming you have two SingleCellExperiment objects, containing sc data
+# Here we load the built-in example datasets of mouse and rabbit gastrulation
+sce_mouse <- RIMA::sce_mouse_gastrulation
+sce_rabbit <- RIMA::sce_rabbit_gastrulation
 
 # Step 0: Define the neighbourhoods (here with Milo's implementation, but could use others, e.g. metacells)
 define_neighbourhoods <- function(sce, prop_seeds, knn=10, reduced.dim="PCA"){
@@ -87,12 +89,12 @@ dt_sims_sig <- calculate_nhoodnhood_significance(
 dt_match <- match_nhoods(dt_sims_sig[is_significant == TRUE])
 
 # Step 5: Visualize and analyze results
-plot_matches_embed(milos, dt_match, cols_color = c("celltype", "celltype"))
+plot_matches_embed(milos, dt_match, cols_color = c("celltype", "celltype"), dimred="PCA")
 plot_matches_map(milos, dt_match, cols_label = c("celltype", "stage"))
 
 # Example downstream analysis: Find the 3 genes with the most conserved expression across matches
 dt_cope <- calculate_cope(milos, dt_match, genes = NULL)
-dt_cope <- dt_cope[order(dt_cope$cope), ]
+dt_cope <- dt_cope[order(dt_cope$cope, na.last = FALSE), ]
 plot_paired_expression(milos, dt_match, genes = tail(dt_cope$gene, 3))
 ```
 
@@ -102,7 +104,7 @@ If you use RIMA in your research, please cite:
 
 ```
 Jacques, M.-A., et al. (2025). RIMA: Rigorous Matching of single-cell transcriptomics Atlases. 
-GitHub: https://github.com/majpark21/RIMA
+GitHub: https://github.com/ma-jacques/RIMA
 ```
 
 ## Example Data
