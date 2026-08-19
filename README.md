@@ -64,8 +64,8 @@ sce_rabbit <- RIMA::sce_rabbit_gastrulation
 define_neighbourhoods <- function(sce, prop_seeds, knn=10, reduced.dim="PCA"){
   n_components <- ncol(reducedDim(sce, reduced.dim))  # use all available PCs
   mi <- Milo(sce)
-  mi <- miloR::buildGraph(mi, k = knn, d = n_components, reduced.dim = "PCA")
-  mi <- miloR::makeNhoods(mi, prop = prop_seeds, k = knn, d=n_components, refined = TRUE)
+  mi <- miloR::buildGraph(mi, k = knn, d = n_components, reduced.dim = reduced.dim)
+  mi <- miloR::makeNhoods(mi, prop = prop_seeds, k = knn, d=n_components, refined = TRUE, reduced_dims = reduced.dim)
   return(mi)
 }
 mi_mouse <- define_neighbourhoods(sce_mouse, prop_seeds = 0.02)
