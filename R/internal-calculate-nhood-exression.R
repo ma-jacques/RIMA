@@ -1,6 +1,5 @@
 # Monkey patch for miloR::calcNhoodExpression which preserves sparsity, running much faster
 .calc_expression <- function(nhoods, data.set, subset.row=NULL, block.size=NULL){
-  print("Further customed")
   if (!is.null(subset.row)) {
       data.set <- data.set[subset.row, , drop=FALSE]
   }
@@ -19,17 +18,13 @@
 
   # 3. Vectorized Math Trick:
   # Mathematically: Out = Dense %*% Sparse
-  # Instead, we do: t(Out) = t(Sparse) %*% t(Dense)
+  # Instead, do: t(Out) = t(Sparse) %*% t(Dense)
   #
   # Shape matching: 
   #   nhoods.norm_t (Neighborhoods x Cells) %*% t(data.set) (Cells x Genes)
   #   = (Neighborhoods x Genes)
   #
-  # This triggers the highly optimized `Sparse %*% Dense` routing inside the 
-  # Matrix package, which instantly hands the dense calculations to your HPC's 
-  # multi-threaded BLAS (like Intel MKL or OpenBLAS).
-  
-  print("Dispatching single-step sparse-dense multiplication to BLAS...")
+  # This triggers the highly optimized `Sparse %*% Dense`
   out_t <- nhoods.norm_t %*% Matrix::t(data.set)
 
   # 4. Transpose back to original shape (Genes x Neighborhoods)
